@@ -1,33 +1,61 @@
 package gui.pangaautomaat;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
+import gui.pangaautomaat.screens.MainMenu;
 
-public class MainClass extends ApplicationAdapter {
-	SpriteBatch batch;
-	Texture img;
-	
+import java.util.ArrayList;
+
+public class MainClass extends Game {
+	public MainMenu MAINMENU;
+	public Viewport viewport;
+	public SpriteBatch batch;
+	public int ScreenWidth = 800;
+	public int ScreenHeight = 600;
+	public Skin skin;
+	public AssetsLoader assetsLoader;
+	public InputMultiplexer inputMultiplexer;
+	public int[] väärtused;
+	public int[] dollarkogused;
+
 	@Override
 	public void create () {
-		batch = new SpriteBatch();
-		img = new Texture("badlogic.jpg");
+		this.viewport = new FitViewport(this.ScreenWidth,this.ScreenHeight, new OrthographicCamera(this.ScreenWidth,this.ScreenHeight));
+		this.batch = new SpriteBatch();
+		this.assetsLoader = new AssetsLoader();
+		this.assetsLoader.init();
+		this.assetsLoader.load();
+		this.skin = assetsLoader.manager.get(assetsLoader.uiSkinJson,Skin.class);
+		this.inputMultiplexer = new InputMultiplexer();
+		this.inputMultiplexer.addProcessor(new InputAdapter(){
+			@Override
+			public boolean keyDown (int keycode) {
+				if (keycode == Input.Keys.ESCAPE){
+					return true;
+				}
+				return false;
+			}
+
+		});
+		Gdx.input.setInputProcessor(this.inputMultiplexer);
+		//nt 1000-dollarilisi on praegu 10 tükki, 500 dollarilisi 3 jne
+		this.väärtused = new int[]{1000,500,200,100,50};
+		this.dollarkogused = new int[]{10,3,5,3,6};
+
+		this.MAINMENU = new MainMenu(this);
+		this.setScreen(this.MAINMENU);
 	}
 
 	@Override
 	public void render () {
-		Gdx.gl.glClearColor(1, 0, 0, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		batch.begin();
-		batch.draw(img, 0, 0);
-		batch.end();
+		super.render();
 	}
-	
+
 	@Override
 	public void dispose () {
-		batch.dispose();
-		img.dispose();
 	}
 }
