@@ -18,6 +18,9 @@ public class Prefs {
     private final String EUR_SVEITS = "EUR_Sveits";
     private final String EUR_ROOTSI = "EUR_Rootsi";
     private final String EUR_Rubla = "EUR_Rubla";
+    private final String defaultKupüürid = "30,200,150,300,600";
+
+    private final String KUPÜÜRID = "Kupüürid";
 
     private Preferences preferences;
 
@@ -28,6 +31,17 @@ public class Prefs {
     public void save(){
         this.preferences.flush();
     }
+
+    public String getKupüürid(){
+        return this.preferences.getString(this.KUPÜÜRID);
+    }
+    public void setKupüürid(String s){
+        this.preferences.putString(this.KUPÜÜRID, s);
+    }
+    public int[] getKupüüridInts(){
+        return stringToInts(getKupüürid());
+    }
+
 
     public String getUSADollar() {
         return this.preferences.getString(this.USA_DOLLAR);
@@ -113,23 +127,23 @@ public class Prefs {
     public void init(){
         boolean toSave = false;
         if (!this.preferences.get().containsKey(this.USA_DOLLAR)){
-            setUSADollar("10,10,10,10,10");
+            setUSADollar(defaultKupüürid);
             toSave = true;
         }
         if (!this.preferences.get().containsKey(this.INGLISE_NAEL)){
-            setIngliseNael("10,10,10,10,10");
+            setIngliseNael(defaultKupüürid);
             toSave = true;
         }
         if (!this.preferences.get().containsKey(this.SVEITSI_FRANK)){
-            setSveitsiFrank("10,10,10,10,10");
+            setSveitsiFrank(defaultKupüürid);
             toSave = true;
         }
         if (!this.preferences.get().containsKey(this.ROOTSI_KROON)){
-            setRootsiKroon("10,10,10,10,10");
+            setRootsiKroon(defaultKupüürid);
             toSave = true;
         }
         if (!this.preferences.get().containsKey(this.VENE_RUBLA)){
-            setVeneRubla("10,10,10,10,10");
+            setVeneRubla(defaultKupüürid);
             toSave = true;
         }
 
@@ -151,6 +165,10 @@ public class Prefs {
         }
         if (!this.preferences.get().containsKey(this.EUR_Rubla)){
             setEUR_Rubla(1.0f);
+            toSave = true;
+        }
+        if (!this.preferences.get().containsKey(this.KUPÜÜRID)){
+            setKupüürid("1000,500,200,50,20");
             toSave = true;
         }
         if (toSave){
