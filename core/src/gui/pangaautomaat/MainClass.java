@@ -21,6 +21,7 @@ public class MainClass extends Game {
 	public InputMultiplexer inputMultiplexer;
 	public int[] väärtused;
 	public int[] dollarkogused;
+	public Prefs prefs;
 
 	@Override
 	public void create () {
@@ -30,6 +31,10 @@ public class MainClass extends Game {
 		this.assetsLoader.init();
 		this.assetsLoader.load();
 		this.skin = assetsLoader.manager.get(assetsLoader.uiSkinJson,Skin.class);
+
+		this.prefs = new Prefs();
+		this.prefs.init();
+
 		this.inputMultiplexer = new InputMultiplexer();
 		this.inputMultiplexer.addProcessor(new InputAdapter(){
 			@Override
