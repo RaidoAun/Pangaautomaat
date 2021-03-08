@@ -8,7 +8,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import gui.pangaautomaat.screens.MainMenu;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MainClass extends Game {
 	public MainMenu MAINMENU;
@@ -19,8 +19,6 @@ public class MainClass extends Game {
 	public Skin skin;
 	public AssetsLoader assetsLoader;
 	public InputMultiplexer inputMultiplexer;
-	public int[] väärtused;
-	public int[] dollarkogused;
 	public Prefs prefs;
 
 	@Override
@@ -47,10 +45,6 @@ public class MainClass extends Game {
 
 		});
 		Gdx.input.setInputProcessor(this.inputMultiplexer);
-		//nt 1000-dollarilisi on praegu 10 tükki, 500 dollarilisi 3 jne
-		this.väärtused = new int[]{1000,500,200,100,50};
-		this.dollarkogused = new int[]{10,3,5,3,6};
-
 		this.MAINMENU = new MainMenu(this);
 		this.setScreen(this.MAINMENU);
 	}
@@ -63,4 +57,6 @@ public class MainClass extends Game {
 	@Override
 	public void dispose () {
 	}
+
+
 }

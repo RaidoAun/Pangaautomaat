@@ -3,6 +3,8 @@ package gui.pangaautomaat;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
+import java.util.Arrays;
+
 public class Prefs {
 
     private final String USA_DOLLAR = "USA dollar";
@@ -43,6 +45,22 @@ public class Prefs {
         return this.preferences.getString(this.VENE_RUBLA);
     }
 
+    public int[] getUSADollarInt(){
+        return stringToInts(getUSADollar());
+    }
+    public int[] getIngliseNaelInt(){
+        return stringToInts(getIngliseNael());
+    }
+    public int[] getSveitsiFrankInt(){
+        return stringToInts(getSveitsiFrank());
+    }
+    public int[] getRootsiKroonInt(){
+        return stringToInts(getRootsiKroon());
+    }
+    public int[] getVeneRublaInt(){
+        return stringToInts(getVeneRubla());
+    }
+
     public float getEUR_USA(){
         return this.preferences.getFloat(this.EUR_USA);
     }
@@ -60,19 +78,19 @@ public class Prefs {
     }
 
     public void setEUR_USA(float f){
-        this.preferences.putFloat(this.USA_DOLLAR, f);
+        this.preferences.putFloat(this.EUR_USA, f);
     }
     public void setEUR_NAEL(float f){
-        this.preferences.putFloat(this.INGLISE_NAEL, f);
+        this.preferences.putFloat(this.EUR_NAEL, f);
     }
     public void setEUR_SVEITS(float f){
-        this.preferences.putFloat(this.SVEITSI_FRANK, f);
+        this.preferences.putFloat(this.EUR_SVEITS, f);
     }
     public void setEUR_ROOTSI(float f){
-        this.preferences.putFloat(this.ROOTSI_KROON, f);
+        this.preferences.putFloat(this.EUR_ROOTSI, f);
     }
     public void setEUR_Rubla(float f){
-        this.preferences.putFloat(this.VENE_RUBLA, f);
+        this.preferences.putFloat(this.EUR_Rubla, f);
     }
 
 
@@ -138,5 +156,14 @@ public class Prefs {
         if (toSave){
             save();
         }
+    }
+
+    public int[] stringToInts(String string){
+        String[] strings = string.split(",");
+        int[] ints = new int[strings.length];
+        for (int i = 0; i < strings.length; i++) {
+            ints[i] = Integer.parseInt(strings[i]);
+        }
+        return ints;
     }
 }
