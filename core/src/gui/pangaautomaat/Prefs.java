@@ -3,8 +3,6 @@ package gui.pangaautomaat;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 
-import java.util.Arrays;
-
 public class Prefs {
 
     private final String USA_DOLLAR = "USA dollar";

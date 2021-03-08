@@ -45,7 +45,12 @@ public class MainClass extends Game {
 
 		});
 		Gdx.input.setInputProcessor(this.inputMultiplexer);
-		this.MAINMENU = new MainMenu(this);
+
+		DataDownloader dataDownloader = new DataDownloader();
+		dataDownloader.download2();
+		System.out.println(Arrays.toString(dataDownloader.getData()));
+
+        this.MAINMENU = new MainMenu(this);
 		this.setScreen(this.MAINMENU);
 	}
 
