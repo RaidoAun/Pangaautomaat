@@ -64,7 +64,7 @@ public class MainClass extends Game {
 		String[] strings = this.dataDownloader.getData();
 		for (int i = 0; i < strings.length; i++) {
 			String[] valuutaandmed = strings[i].split(",");
-			this.prefs.preferences.putFloat(valuutaandmed[0], Float.parseFloat(valuutaandmed[1]));
+			this.prefs.preferences.putFloat(this.prefs.EURPREFIX+ valuutaandmed[0], Float.parseFloat(valuutaandmed[1]));
 		}
 		this.prefs.save();
 	}

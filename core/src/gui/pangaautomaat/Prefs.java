@@ -5,18 +5,19 @@ import com.badlogic.gdx.Preferences;
 
 public class Prefs {
 
-    private final String USA_DOLLAR = "USA dollar";
-    private final String INGLISE_NAEL = "inglise nael";
-    private final String SVEITSI_FRANK = "šveitsi frank";
-    private final String ROOTSI_KROON = "rootsi kroon";
-    private final String VENE_RUBLA = "vene rubla";
+    private final String USA_DOLLAR = MainClass.valuutad[0];
+    private final String INGLISE_NAEL = MainClass.valuutad[1];
+    private final String SVEITSI_FRANK = MainClass.valuutad[2];
+    private final String ROOTSI_KROON = MainClass.valuutad[3];
+    private final String VENE_RUBLA = MainClass.valuutad[4];
 
-    private final String EUR_USA = MainClass.valuutad[0];
-    private final String EUR_NAEL = MainClass.valuutad[1];
-    private final String EUR_SVEITS = MainClass.valuutad[2];
-    private final String EUR_ROOTSI = MainClass.valuutad[3];
-    private final String EUR_Rubla = MainClass.valuutad[4];
-    private final String defaultKupüürid = "30,200,150,300,600";
+    public final String EURPREFIX = "EUR_";
+    private final String EUR_USA = EURPREFIX + MainClass.valuutad[0];
+    private final String EUR_NAEL = EURPREFIX +MainClass.valuutad[1];
+    private final String EUR_SVEITS = EURPREFIX +MainClass.valuutad[2];
+    private final String EUR_ROOTSI = EURPREFIX +MainClass.valuutad[3];
+    private final String EUR_Rubla = EURPREFIX +MainClass.valuutad[4];
+
 
     private final String KUPÜÜRID = "Kupüürid";
 
@@ -41,6 +42,7 @@ public class Prefs {
     }
 
 
+    /*
     public String getUSADollar() {
         return this.preferences.getString(this.USA_DOLLAR);
     }
@@ -73,6 +75,7 @@ public class Prefs {
         return stringToInts(getVeneRubla());
     }
 
+     */
     public float getEUR_USA(){
         return this.preferences.getFloat(this.EUR_USA);
     }
@@ -127,6 +130,7 @@ public class Prefs {
         if (this.preferences.get().isEmpty()){
 
         }
+        String defaultKupüürid = "30,200,150,300,600";
         if (!this.preferences.get().containsKey(this.USA_DOLLAR)){
             setUSADollar(defaultKupüürid);
             toSave = true;
