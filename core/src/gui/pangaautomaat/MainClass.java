@@ -8,8 +8,6 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import gui.pangaautomaat.screens.MainMenu;
 
-import java.util.Arrays;
-
 public class MainClass extends Game {
 	public MainMenu MAINMENU;
 	public Viewport viewport;
@@ -20,7 +18,8 @@ public class MainClass extends Game {
 	public AssetsLoader assetsLoader;
 	public InputMultiplexer inputMultiplexer;
 	public Prefs prefs;
-
+	public DataDownloader dataDownloader;
+	public static String[] valuutad = new String[]{"USD","GBP","CHF","SEK","RUB"};
 	@Override
 	public void create () {
 		this.viewport = new FitViewport(this.ScreenWidth,this.ScreenHeight, new OrthographicCamera(this.ScreenWidth,this.ScreenHeight));
@@ -29,9 +28,11 @@ public class MainClass extends Game {
 		this.assetsLoader.init();
 		this.assetsLoader.load();
 		this.skin = assetsLoader.manager.get(assetsLoader.uiSkinJson,Skin.class);
-
+		this.dataDownloader = new DataDownloader();
 		this.prefs = new Prefs();
 		this.prefs.init();
+		updateDataToPrefs();
+		System.out.println(dataDownloader.dataTime);
 
 		this.inputMultiplexer = new InputMultiplexer();
 		this.inputMultiplexer.addProcessor(new InputAdapter(){
@@ -46,9 +47,6 @@ public class MainClass extends Game {
 		});
 		Gdx.input.setInputProcessor(this.inputMultiplexer);
 
-		DataDownloader dataDownloader = new DataDownloader();
-		dataDownloader.download2();
-		System.out.println(Arrays.toString(dataDownloader.getData()));
 
         this.MAINMENU = new MainMenu(this);
 		this.setScreen(this.MAINMENU);
@@ -62,6 +60,13 @@ public class MainClass extends Game {
 	@Override
 	public void dispose () {
 	}
-
+	public void updateDataToPrefs(){
+		String[] strings = this.dataDownloader.getData();
+		for (int i = 0; i < strings.length; i++) {
+			String[] valuutaandmed = strings[i].split(",");
+			this.prefs.preferences.putFloat(valuutaandmed[0], Float.parseFloat(valuutaandmed[1]));
+		}
+		this.prefs.save();
+	}
 
 }

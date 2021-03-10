@@ -1,5 +1,6 @@
 package gui.pangaautomaat;
 
+import jdk.tools.jaotc.Main;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -17,14 +18,14 @@ public class DataDownloader {
     public String dataPath;
     public String URL;
     public String absoluteDataPath;
-    public String[] valuutad;
+    public String dataTime;
     public DataDownloader(){
         this.dataPath = "andmed/andmed.xml";
         this.URL = "https://www.eestipank.ee/valuutakursid/export/xml/latest";
         this.absoluteDataPath = new File(dataPath).getAbsolutePath();
-        this.valuutad = new String[]{"USD","GBP","CHF","SEK","RUB"};
+
     }
-    public void download2(){
+    public void download(){
         try {
             InputStream inputStream = new URL(this.URL).openStream();
             String path = absoluteDataPath;
@@ -51,10 +52,13 @@ public class DataDownloader {
                 if (node.getNodeType() == Node.ELEMENT_NODE)
                 {
                     Element element = (Element) node;
+                    if (element.hasAttribute("time")){
+                        this.dataTime = element.getAttribute("time");
+                    }
                     if (element.hasAttribute("currency")){
                         String valuutatähis = element.getAttribute("currency");
-                        String s = valuutatähis+";"+element.getAttribute("rate");
-                        for (String valuuta:valuutad) {
+                        String s = valuutatähis+","+element.getAttribute("rate");
+                        for (String valuuta:MainClass.valuutad) {
                             if (valuuta.equals(valuutatähis)){
                                 strings.add(s);
                             }

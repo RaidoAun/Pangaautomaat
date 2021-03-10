@@ -11,16 +11,16 @@ public class Prefs {
     private final String ROOTSI_KROON = "rootsi kroon";
     private final String VENE_RUBLA = "vene rubla";
 
-    private final String EUR_USA = "EUR_USA";
-    private final String EUR_NAEL = "EUR_Nael";
-    private final String EUR_SVEITS = "EUR_Sveits";
-    private final String EUR_ROOTSI = "EUR_Rootsi";
-    private final String EUR_Rubla = "EUR_Rubla";
+    private final String EUR_USA = MainClass.valuutad[0];
+    private final String EUR_NAEL = MainClass.valuutad[1];
+    private final String EUR_SVEITS = MainClass.valuutad[2];
+    private final String EUR_ROOTSI = MainClass.valuutad[3];
+    private final String EUR_Rubla = MainClass.valuutad[4];
     private final String defaultKupüürid = "30,200,150,300,600";
 
     private final String KUPÜÜRID = "Kupüürid";
 
-    private Preferences preferences;
+    public Preferences preferences;
 
     public Prefs(){
         this.preferences = Gdx.app.getPreferences("PangaautomaatPrefs");
@@ -124,6 +124,9 @@ public class Prefs {
 
     public void init(){
         boolean toSave = false;
+        if (this.preferences.get().isEmpty()){
+
+        }
         if (!this.preferences.get().containsKey(this.USA_DOLLAR)){
             setUSADollar(defaultKupüürid);
             toSave = true;

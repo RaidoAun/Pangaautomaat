@@ -30,11 +30,11 @@ public class MainMenu implements Screen {
 
         final SelectBox<String> rahaühikbox = new SelectBox<>(mainClass.skin);
         String[] values = new String[5];
-        values[0] = "USA dollar";
-        values[1] = "inglise nael";
-        values[2] = "šveitsi frank";
-        values[3] = "rootsi kroon";
-        values[4] = "vene rubla";
+        values[0] = "USA dollar USD";
+        values[1] = "inglise nael GBP";
+        values[2] = "sveitsi frank CHF";
+        values[3] = "rootsi kroon SEK";
+        values[4] = "vene rubla RUB";
         rahaühikbox.setItems(values);
 
         final SelectBox<String> vahetustüüpbox = new SelectBox<>(mainClass.skin);
@@ -51,7 +51,18 @@ public class MainMenu implements Screen {
                 return true;
             }
         });
-
+        final TextButton downloadbutton = new TextButton("Download new data",mainClass.skin);
+        downloadbutton.addListener(new InputListener(){
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                mainClass.dataDownloader.download();
+                mainClass.updateDataToPrefs();
+                //TODO GUI võiks näidata ka praeguseid kursi andmeid, siin saaks uuendada seda
+                //mainClass.dataDownloader.dataTime;
+                //mainClass.prefs.getEUR_USA();
+                return true;
+            }
+        });
         Table table = new Table();
         table.setFillParent(true);
         table.add(new Label("Sisesta rahasumma: ",labelStyle));
@@ -60,6 +71,7 @@ public class MainMenu implements Screen {
         table.add(vahetustüüpbox);
         table.row();
         table.add(applybutton);
+        table.add(downloadbutton);
         stage.addActor(table);
         mainClass.inputMultiplexer.setProcessors(stage);
     }
