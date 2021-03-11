@@ -59,6 +59,8 @@ public class MainClass extends Game {
 
 	@Override
 	public void dispose () {
+		batch.dispose();
+		skin.dispose();
 	}
 	public void updateDataToPrefs(){
 		String[] strings = this.dataDownloader.getData();

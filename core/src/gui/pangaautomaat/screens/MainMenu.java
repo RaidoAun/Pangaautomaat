@@ -11,7 +11,7 @@ import gui.pangaautomaat.MainClass;
 import gui.pangaautomaat.NumberTextFieldFilter;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainMenu implements Screen {
     private MainClass mainClass;
@@ -20,8 +20,7 @@ public class MainMenu implements Screen {
     private int[] parimkasutatud;
     private double parimrahasumma;
     private int[] reference;
-    private int vähimx;
-    private boolean isfinished;
+    private AtomicBoolean isfinished;
     public MainMenu(MainClass mainclass){
         this.mainClass = mainclass;
     }
@@ -32,8 +31,8 @@ public class MainMenu implements Screen {
         reference = mainClass.prefs.getKupüüridInts();
         Label.LabelStyle labelStyle = mainClass.skin.get(Label.LabelStyle.class);
         labelStyle.font = mainClass.assetsLoader.manager.get(mainClass.assetsLoader.robotoBlack);
-        //reference = mainClass.prefs.getKupüüridInts();
-        reference = new int[]{1000,500,200,50,20};
+        reference = mainClass.prefs.getKupüüridInts();
+        //reference = new int[]{1000,500,200,50,20};
 
         final TextField rahaarvtextfield = new TextField("0", mainClass.skin);
         rahaarvtextfield.setTextFieldFilter(new NumberTextFieldFilter());
@@ -60,10 +59,7 @@ public class MainMenu implements Screen {
         applybutton.addListener(new InputListener(){
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                //TODO KIRJUTA SIIA OMA KOOD, KUI RAHAVAHETUS
                 //START
-                System.out.println("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-                System.out.println(rahaarvtextfield.getText());
                 vahetus(vahetustüüpbox.getSelected(), Double.parseDouble(rahaarvtextfield.getText()), fromrahaühikbox.getSelected(), torahaühikbox.getSelected());
 
 
@@ -131,7 +127,7 @@ public class MainMenu implements Screen {
 
     @Override
     public void dispose() {
-
+        stage.dispose();
     }
 
     public void vahetus(String tagastatav, double rahasumma, String algvaluuta, String soovvaluuta) {
@@ -140,19 +136,22 @@ public class MainMenu implements Screen {
         double soovkurss = mainClass.prefs.preferences.getFloat(eurprefix + soovvaluuta);
         double realkurss = soovkurss/algkurss;
         double paljuraha = rahasumma * realkurss;
-        isfinished = false;
+        isfinished = new AtomicBoolean();
+        isfinished.set(false);
         //TODO check, et pangaautomaadis yldse piisavalt raha vahetuseks
         int[] available = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(soovvaluuta));
         int[] kasutatud = new int[available.length];
-        for (int i = 0; i < available.length; i++) {
-            vähimx += available[i];
-        }
         // available[] index tähistab: [1000, 500, 200, 50, 20]
         parimkasutatud = new int[reference.length];
-        double parimjääk = leiaParimJääk(rahasumma);
-        rec(rahasumma, available, kasutatud, 0, parimjääk);
-        System.out.println(parimjääk);
-        //rec2(rahasumma,available,kasutatud,1,parimjääk);
+        double parimjääk = leiaParimJääk(rahasumma, available);
+        if(tagastatav.equals("max")) {
+            leiaVahetusMax(rahasumma,available,kasutatud, parimjääk);
+        }
+        if (tagastatav.equals("min")){
+            leiaVahetusMin(rahasumma, available, kasutatud, parimjääk);
+        }
+
+
         System.out.println("-------------");
         String[] kupyyrid = mainClass.prefs.getKupüürid().split(",");
         String s = "";
@@ -162,8 +161,8 @@ public class MainMenu implements Screen {
         kasutatudlabel.setText(s);
     }
 
-    public void rec(double rahasumma, int[] available, int[] kasutatud2, int x, double parimjääk) {
-        if (isfinished) {
+    public void leiaVahetusMin(double rahasumma, int[] available, int[] kasutatud2, double parimjääk) {
+        if (isfinished.get()) {
             return;
         }
         int[] kasutatud = new int[kasutatud2.length];
@@ -172,52 +171,64 @@ public class MainMenu implements Screen {
         }
         for (int i = 0; i < kasutatud.length; i++) {
             if (rahasumma >= reference[i]) {
-                available[i] -= 1;
-                kasutatud[i] += 1;
-                rahasumma -= reference[i];
-                if (rahasumma == parimjääk&&x < vähimx) {
-                    parimrahasumma = rahasumma;
-                    parimkasutatud = kasutatud;
-                    vähimx = x;
-                    System.out.print(x + " --- ");
-                    System.out.print(rahasumma + " -- ");
-                    System.out.println(Arrays.toString(kasutatud));
-                    isfinished = true;
+                if (available[i]>0){
+                    available[i] -= 1;
+                    kasutatud[i] += 1;
+                    rahasumma -= reference[i];
+                    if (rahasumma == parimjääk) {
+                        parimrahasumma = rahasumma;
+                        parimkasutatud = kasutatud;
+                        System.out.print(rahasumma + " -- ");
+                        System.out.println(Arrays.toString(kasutatud));
+                        isfinished.set(true);
+                    }
+                    leiaVahetusMin(rahasumma, available, kasutatud, parimjääk);
+                    available[i] += 1;
+                    kasutatud[i] -= 1;
+                    rahasumma += reference[i];
                 }
-                rec(rahasumma, available, kasutatud, x+1, parimjääk);
-                available[i] += 1;
-                kasutatud[i] -= 1;
-                rahasumma += reference[i];
             }
         }
     }
-
-    private void rec2(float rahasumma, int[] available, int[] kasutatud2, int x, double parimjääk){
+    private void leiaVahetusMax(double rahasumma, int[] available, int[] kasutatud2, double parimjääk){
+        if (isfinished.get()) {
+            return;
+        }
         int[] kasutatud = new int[kasutatud2.length];
         for (int i = 0; i < kasutatud2.length; i++) {
             kasutatud[i] = kasutatud2[i];
         }
         for (int i = kasutatud.length-1; i >= 0; i--) {
             if (rahasumma >= reference[i]) {
-                available[i] -= 1;
-                kasutatud[i] += 1;
-                rahasumma -= reference[i];
-                if (rahasumma < parimjääk) {
-                    parimkasutatud = kasutatud;
-                    System.out.print(x + " --- ");
-                    System.out.print(rahasumma + " -- ");
-                    System.out.println(Arrays.toString(kasutatud));
+                if (available[i]>0){
+                    if (isfinished.get()){
+                        return;
+                    }
+                    available[i] -= 1;
+                    kasutatud[i] += 1;
+                    rahasumma -= reference[i];
+                    if (rahasumma == parimjääk) {
+                        parimrahasumma = rahasumma;
+                        parimkasutatud = kasutatud;
+                        System.out.print(rahasumma + " -- ");
+                        System.out.println(Arrays.toString(kasutatud));
+                        isfinished.set(true);
+                    }
+                    leiaVahetusMax(rahasumma, available, kasutatud, parimjääk);
+                    available[i] += 1;
+                    kasutatud[i] -= 1;
+                    rahasumma += reference[i];
                 }
-                rec2(rahasumma, available, kasutatud, x + 1,parimjääk);
-                available[i] += 1;
-                kasutatud[i] -= 1;
-                rahasumma += reference[i];
             }
         }
     }
-    private double leiaParimJääk(double rahasumma){
+    private double leiaParimJääk(double rahasumma, int[] avaivable){
+
+        int automaadisRaha = leiaAutomaadisOlevRaha(avaivable);
+
         int i1 = reference.length-1; //20
         int i2 = reference.length-2; //50
+
         if (rahasumma < reference[i1]) {
             return rahasumma;
         } else {
@@ -229,7 +240,25 @@ public class MainMenu implements Screen {
             if (parimjääk >= algjääk && rahasumma >= reference[i2]) {
                 parimjääk -= algjääk;
             }
+            int kahtlaseidKohti = reference[i2]/reference[i1];
+            for (int i = 0; i < reference[i2]/reference[i1]; i++) {
+                float aluminepiir =automaadisRaha-kahtlaseidKohti*reference[i1]+algjääk+reference[i1]*i;
+                float üleminepiir =aluminepiir+algjääk;
+                if (üleminepiir>rahasumma && rahasumma>=aluminepiir) {
+                    return algjääk + parimjääk;
+                }
+            }
+            if (rahasumma>=automaadisRaha){
+                return rahasumma-automaadisRaha;
+            }
             return parimjääk;
         }
+    }
+    private int leiaAutomaadisOlevRaha(int[] avaivable){
+        int summa = 0;
+        for (int i = 0; i < avaivable.length; i++) {
+            summa+=avaivable[i]*reference[i];
+        }
+        return summa;
     }
 }
