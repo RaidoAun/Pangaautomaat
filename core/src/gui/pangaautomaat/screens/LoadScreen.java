@@ -10,12 +10,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import gui.pangaautomaat.MainClass;
 import gui.pangaautomaat.NumberTextFieldFilter;
 
-import java.util.Arrays;
-
 public class LoadScreen implements Screen {
     private MainClass mainClass;
     private Stage stage;
     private TextField[][] textFields;
+    private TextField[] referencekupüüridtextfields;
     public LoadScreen(MainClass mainClass){
         this.mainClass = mainClass;
     }
@@ -27,14 +26,23 @@ public class LoadScreen implements Screen {
         String[] valuutad =  MainClass.valuutad;
         Table table = new Table();
         table.setFillParent(true);
-        int[] kupüürid = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(valuutad[0]));
-        textFields = new TextField[valuutad.length][kupüürid.length];
-
+        int[] valuutaKupüürid = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(valuutad[0]));
+        int[] referencekupüürid = mainClass.prefs.stringToInts(mainClass.prefs.getKupüürid());
+        table.add(new Label("kupüürid",labelStyle));
+        textFields = new TextField[valuutad.length][valuutaKupüürid.length];
+        referencekupüüridtextfields = new TextField[valuutaKupüürid.length];
+        for (int j = 0; j < valuutaKupüürid.length; j++) {
+            TextField referenceearvtextfield = new TextField(String.valueOf(referencekupüürid[j]), mainClass.skin);
+            referenceearvtextfield.setTextFieldFilter(new NumberTextFieldFilter());
+            referencekupüüridtextfields[j] = referenceearvtextfield;
+            table.add(referenceearvtextfield).width(100).pad(5);
+        }
+        table.row();
         for (int i = 0; i < valuutad.length; i++) {
             table.add(new Label(valuutad[i],labelStyle));
-            kupüürid = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(valuutad[i]));
-            for (int j = 0; j < kupüürid.length; j++) {
-                TextField kupüüridearvtextfield = new TextField(String.valueOf(kupüürid[j]), mainClass.skin);
+            valuutaKupüürid = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(valuutad[i]));
+            for (int j = 0; j < valuutaKupüürid.length; j++) {
+                TextField kupüüridearvtextfield = new TextField(String.valueOf(valuutaKupüürid[j]), mainClass.skin);
                 kupüüridearvtextfield.setTextFieldFilter(new NumberTextFieldFilter());
                 textFields[i][j] = kupüüridearvtextfield;
                 table.add(kupüüridearvtextfield).width(100).pad(5);
@@ -47,18 +55,24 @@ public class LoadScreen implements Screen {
         applybutton.addListener(new InputListener(){
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-
+                int[] referencekupüürid = mainClass.prefs.stringToInts(mainClass.prefs.getKupüürid());
                 String[] valuutad =  MainClass.valuutad;
                 for (int i = 0; i < valuutad.length; i++) {
                     int[] kupüürid = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(valuutad[i]));
-                    String[] strings = new String[kupüürid.length];
+                    String[] strings = new String[referencekupüürid.length];
                     for (int j = 0; j < kupüürid.length; j++) {
                         strings[j] = textFields[i][j].getText();
                     }
                     mainClass.prefs.preferences.putString(valuutad[i],mainClass.prefs.stringsToString(strings));
                 }
+
+                String[] strings = new String[referencekupüürid.length];
+                for (int i = 0; i < referencekupüürid.length; i++) {
+                     strings[i] = referencekupüüridtextfields[i].getText();
+                }
+                mainClass.prefs.setKupüürid(mainClass.prefs.stringsToString(strings));
                 mainClass.prefs.save();
-                mainClass.setScreen(new MainMenu(mainClass));
+                mainClass.setScreen(mainClass.MAINMENU);
                 dispose();
                 return true;
             }
@@ -96,7 +110,7 @@ public class LoadScreen implements Screen {
 
     @Override
     public void hide() {
-
+        dispose();
     }
 
     @Override

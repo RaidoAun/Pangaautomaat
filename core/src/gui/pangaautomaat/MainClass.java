@@ -33,7 +33,6 @@ public class MainClass extends Game {
 		this.prefs.init();
 		updateDataToPrefs();
 		System.out.println(dataDownloader.dataTime);
-
 		this.inputMultiplexer = new InputMultiplexer();
 		this.inputMultiplexer.addProcessor(new InputAdapter(){
 			@Override

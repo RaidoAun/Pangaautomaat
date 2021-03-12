@@ -24,10 +24,6 @@ public class MainMenu implements Screen {
     private boolean isfinished;
     public MainMenu(MainClass mainclass){
         this.mainClass = mainclass;
-    }
-
-    @Override
-    public void show() {
         stage = new Stage(mainClass.viewport,mainClass.batch);
         reference = mainClass.prefs.getKupüüridInts();
         Label.LabelStyle labelStyle = mainClass.skin.get(Label.LabelStyle.class);
@@ -112,6 +108,7 @@ public class MainMenu implements Screen {
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 mainClass.dataDownloader.download();
                 mainClass.updateDataToPrefs();
+
                 //TODO GUI võiks näidata ka praeguseid kursi andmeid, siin saaks uuendada seda
                 //mainClass.dataDownloader.dataTime;
                 //mainClass.prefs.getEUR_USA();
@@ -123,7 +120,7 @@ public class MainMenu implements Screen {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 mainClass.setScreen(new LoadScreen(mainClass));
-                dispose();
+                //dispose();
                 return true;
             }
         });
@@ -133,6 +130,7 @@ public class MainMenu implements Screen {
         for (int i = 0; i < kupyyrid.length; i++) {
             s += kupyyrid[i] + "-" + "0" + "\n";
         }
+        s+="summa = 0";
         kasutatudlabel.setText(s);
 
         Table firstTable = new Table();
@@ -158,7 +156,13 @@ public class MainMenu implements Screen {
         mainTable.row();
         mainTable.add(secondaryTable).minHeight(300).bottom();
         stage.addActor(mainTable);
+
+    }
+
+    @Override
+    public void show() {
         mainClass.inputMultiplexer.addProcessor(stage);
+
     }
 
     @Override
@@ -186,6 +190,7 @@ public class MainMenu implements Screen {
 
     @Override
     public void hide() {
+        mainClass.inputMultiplexer.removeProcessor(stage);
 
     }
 
@@ -348,9 +353,12 @@ public class MainMenu implements Screen {
     private void kuvaTagastatavText(){
         String[] kupyyrid = mainClass.prefs.getKupüürid().split(",");
         String s = "";
+        int summa = 0;
         for (int i = 0; i < kupyyrid.length; i++) {
             s += kupyyrid[i] + " x " + parimkasutatud[i] + "\n";
+            summa+=parimkasutatud[i]*reference[i];
         }
+        s+="summa = "+summa;
         kasutatudlabel.setText(s);
     }
 }
