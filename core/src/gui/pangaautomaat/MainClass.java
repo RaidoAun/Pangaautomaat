@@ -19,7 +19,7 @@ public class MainClass extends Game {
 	public InputMultiplexer inputMultiplexer;
 	public Prefs prefs;
 	public DataDownloader dataDownloader;
-	public static String[] valuutad = new String[]{"USD","GBP","CHF","SEK","RUB"};
+	public static final String[] valuutad = new String[]{"USD","GBP","CHF","SEK","RUB"};
 	@Override
 	public void create () {
 		this.viewport = new FitViewport(this.ScreenWidth,this.ScreenHeight, new OrthographicCamera(this.ScreenWidth,this.ScreenHeight));

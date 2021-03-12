@@ -8,7 +8,7 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.title = "Pangaautomaat";
-		config.resizable = true;
+		config.resizable = false;
 		new LwjglApplication(new MainClass(), config);
 	}
 }

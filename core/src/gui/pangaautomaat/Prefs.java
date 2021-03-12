@@ -189,4 +189,28 @@ public class Prefs {
         }
         return ints;
     }
+    public String intsToString(int[] ints){
+        String string = "";
+        for (int i = 0; i < ints.length; i++) {
+            if (i == ints.length-1){
+                string += String.valueOf(ints[i]);
+            }else {
+                string += String.valueOf(ints[i])+",";
+            }
+
+        }
+        return string;
+    }
+    public String stringsToString(String[] strings){
+        String string = "";
+        for (int i = 0; i < strings.length; i++) {
+            if (i == strings.length-1){
+                string += String.valueOf(strings[i]);
+            }else {
+                string += String.valueOf(strings[i])+",";
+            }
+
+        }
+        return string;
+    }
 }
