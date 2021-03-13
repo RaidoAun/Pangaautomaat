@@ -7,11 +7,15 @@ import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import gui.pangaautomaat.FloatTextFieldFilter;
 import gui.pangaautomaat.MainClass;
 import gui.pangaautomaat.NumberTextFieldFilter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainMenu implements Screen {
@@ -22,14 +26,16 @@ public class MainMenu implements Screen {
     private double parimrahasumma;
     private int[] reference;
     private boolean isfinished;
+    private double parimjääk;
     public MainMenu(MainClass mainclass){
         this.mainClass = mainclass;
-        stage = new Stage(mainClass.viewport,mainClass.batch);
         reference = mainClass.prefs.getKupüüridInts();
+        parimkasutatud = new int[reference.length];
+
+        stage = new Stage(mainClass.viewport,mainClass.batch);
+
         Label.LabelStyle labelStyle = mainClass.skin.get(Label.LabelStyle.class);
         labelStyle.font = mainClass.assetsLoader.manager.get(mainClass.assetsLoader.robotoBlack);
-        reference = mainClass.prefs.getKupüüridInts();
-        //reference = new int[]{1000,500,200,50,20};
 
         final TextField fromrahaarvtextfield = new TextField("0", mainClass.skin);
         final TextField torahaarvtextfield = new TextField("0", mainClass.skin);
@@ -126,12 +132,14 @@ public class MainMenu implements Screen {
         });
         kasutatudlabel = new Label("", labelStyle);
         String[] kupyyrid = mainClass.prefs.getKupüürid().split(",");
-        String s = "";
-        for (int i = 0; i < kupyyrid.length; i++) {
-            s += kupyyrid[i] + "-" + "0" + "\n";
-        }
-        s+="summa = 0";
-        kasutatudlabel.setText(s);
+        Arrays.sort(kupyyrid, new Comparator<String>()
+        {
+            public int compare(String s1, String s2)
+            {
+                return Integer.valueOf(s1).compareTo(Integer.valueOf(s2));
+            }
+        });
+        kuvaTagastatavText();
 
         Table firstTable = new Table();
         firstTable.add(fromrahaühikbox);
@@ -162,6 +170,7 @@ public class MainMenu implements Screen {
     @Override
     public void show() {
         mainClass.inputMultiplexer.addProcessor(stage);
+        reference = mainClass.prefs.getKupüüridInts();
 
     }
 
@@ -208,17 +217,56 @@ public class MainMenu implements Screen {
         int[] kasutatud = new int[available.length];
         // available[] index tähistab: [1000, 500, 200, 50, 20]
         parimkasutatud = new int[reference.length];
-        double parimjääk = leiaParimJääk(paljuraha, available);
+        //double parimjääk = leiaParimJääk(paljuraha, available);
+        int[] tempreference = sortedList(reference);
+        int[] avaivabletemp = matchReferenceWithAvaivable(tempreference, reference, available);
+        double parimjääk = leiaParimJääk2(paljuraha,available, kasutatud, reference);
+        this.parimjääk = parimjääk;
+        System.out.println(parimjääk);
         if(tagastatav.equals("max")) {
-            leiaVahetusMax(paljuraha,available,kasutatud, parimjääk);
+            leiaVahetusMax(paljuraha,avaivabletemp,kasutatud, parimjääk, tempreference);
         }
         if (tagastatav.equals("min")){
-            leiaVahetusMin(paljuraha, available, kasutatud, parimjääk);
+            leiaVahetusMin(paljuraha, avaivabletemp, kasutatud, parimjääk, tempreference);
         }
-
+        System.out.println("-------");
     }
 
-    public void leiaVahetusMin(double rahasumma, int[] available, int[] kasutatud2, double parimjääk) {
+    public void leiaVahetusMin(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference) {
+        if (isfinished) {
+            return;
+        }
+
+        int[] kasutatud = new int[kasutatud2.length];
+        for (int i = 0; i < kasutatud2.length; i++) {
+            kasutatud[i] = kasutatud2[i];
+        }
+        for (int i = kasutatud.length-1; i >= 0; i--) {
+            if (rahasumma >= reference[i]) {
+                if (available[i]>0){
+                    available[i] -= 1;
+                    kasutatud[i] += 1;
+                    rahasumma -= reference[i];
+                    if (rahasumma == parimjääk) {
+                        parimkasutatud = kasutatud;
+                        kuvaTagastatavText();
+                        isfinished = true;
+                    }
+                    leiaVahetusMin(rahasumma, available, kasutatud, parimjääk, reference);
+                    available[i] += 1;
+                    kasutatud[i] -= 1;
+                    rahasumma += reference[i];
+                }
+            }else {
+                if (rahasumma == parimjääk) {
+                    parimkasutatud = kasutatud;
+                    kuvaTagastatavText();
+                    isfinished = true;
+                }
+            }
+        }
+    }
+    private void leiaVahetusMax(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference){
         if (isfinished) {
             return;
         }
@@ -229,118 +277,109 @@ public class MainMenu implements Screen {
         for (int i = 0; i < kasutatud.length; i++) {
             if (rahasumma >= reference[i]) {
                 if (available[i]>0){
-                    available[i] -= 1;
-                    kasutatud[i] += 1;
-                    rahasumma -= reference[i];
-                    if (rahasumma == parimjääk) {
-                        parimkasutatud = kasutatud;
-                        kuvaTagastatavText();
-                        isfinished = true;
-                    }
-                    leiaVahetusMin(rahasumma, available, kasutatud, parimjääk);
-                    available[i] += 1;
-                    kasutatud[i] -= 1;
-                    rahasumma += reference[i];
-                }
-            }
-        }
-    }
-    private void leiaVahetusMax(double rahasumma, int[] available, int[] kasutatud2, double parimjääk){
-        if (isfinished) {
-            return;
-        }
-        int[] kasutatud = new int[kasutatud2.length];
-        for (int i = 0; i < kasutatud2.length; i++) {
-            kasutatud[i] = kasutatud2[i];
-        }
-        for (int i = kasutatud.length-1; i >= 0; i--) {
-            if (rahasumma >= reference[i]) {
-                if (available[i]>0){
                     if (isfinished){
                         return;
                     }
                     available[i] -= 1;
                     kasutatud[i] += 1;
+                    System.out.println(Arrays.toString(kasutatud));
+                    System.out.println(rahasumma);
+                    System.out.println("-----");
                     rahasumma -= reference[i];
                     if (rahasumma == parimjääk) {
-                        parimrahasumma = rahasumma;
                         parimkasutatud = kasutatud;
                         kuvaTagastatavText();
                         isfinished = true;
                     }
-                    leiaVahetusMax(rahasumma, available, kasutatud, parimjääk);
+
+                    leiaVahetusMax(rahasumma, available, kasutatud, parimjääk, reference);
                     available[i] += 1;
                     kasutatud[i] -= 1;
                     rahasumma += reference[i];
                 }
-            }
-        }
-    }
-    private double leiaParimJääk(double rahasumma, int[] avaivable){
-
-        int automaadisRaha = leiaAutomaadisOlevRaha(avaivable);
-
-        int i1 = reference.length-1; //20
-        int i2 = reference.length-2; //50
-
-        if (rahasumma < reference[i1]) {
-            return rahasumma;
-        } else {
-            double a = reference[i2] / reference[i1];
-            int a1 = (int) a;
-            int a2 = a1 + 1;
-            float algjääk = Math.max(reference[i1] * a2 - reference[i2], reference[i2] - reference[i1] * a1);
-            double parimjääk = rahasumma % reference[i1];
-            if (parimjääk >= algjääk && rahasumma >= reference[i2]) {
-                parimjääk -= algjääk;
-            }
-            int kahtlaseidKohti = reference[i2]/reference[i1];
-            for (int i = 0; i < reference[i2]/reference[i1]; i++) {
-                float aluminepiir =automaadisRaha-kahtlaseidKohti*reference[i1]+algjääk+reference[i1]*i;
-                float üleminepiir =aluminepiir+algjääk;
-                if (üleminepiir>rahasumma && rahasumma>=aluminepiir) {
-                    //return algjääk + parimjääk;
+            }else {
+                if (rahasumma == parimjääk) {
+                    parimkasutatud = kasutatud;
+                    kuvaTagastatavText();
+                    isfinished = true;
                 }
             }
-            if (rahasumma>=automaadisRaha){
-                return rahasumma-automaadisRaha;
-            }
-            return parimjääk;
         }
     }
-    private int leiaAutomaadisOlevRaha(int[] avaivable){
+    private int leiaAutomaadisOlevRaha(int[] avaivable, int[] reference){
         int summa = 0;
         for (int i = 0; i < avaivable.length; i++) {
             summa+=avaivable[i]*reference[i];
         }
         return summa;
     }
-    private void leiaParimJääkRekursiooniga(double rahasumma, int[] available, int[] kasutatud2, double parimjääk){
-        int[] vähimadkordsed = new int[]{50,20};
-        int[] ülejäänud = new int[]{1000,500,200};
+
+    private double leiaParimJääk2(double rahasumma, int[] available, int[] kasutatud2, int[] reference){
+        ArrayList<Integer> olemasKupüürid = new ArrayList<>();
+        for (int i = 0; i < available.length; i++) {
+            if (available[i]!=0){
+                olemasKupüürid.add(reference[i]);
+            }
+        }
+        int[] olemas = new int[olemasKupüürid.size()];
+        for (int i = 0; i < olemasKupüürid.size(); i++) {
+            olemas[i] = olemasKupüürid.get(i);
+        }
+        int [] tempreference = sortedList(reference);
+        available = matchReferenceWithAvaivable(tempreference, reference, available);
+        reference = tempreference;
+        if (leiaAutomaadisOlevRaha(available, reference)<=rahasumma){
+            System.out.println("AUTOMAADIS POLE PIISAVALT RAHA");
+            return rahasumma-leiaAutomaadisOlevRaha(available, reference);
+
+        }else {
+            double vähendatudRahaSumma = rahasumma%LCM(olemas);
+            double eemaldatud = rahasumma-vähendatudRahaSumma;
+            //TODO jääk on raudselt 0, võib kasutada leiaVahetusMin();
+            for (int i = reference.length-1; i > 0; i--) {
+                while (available[i]>0 && eemaldatud>=0){
+                    System.out.println(eemaldatud);
+                    eemaldatud-=reference[i];
+                    available[i]--;
+                }
+            }
+            System.out.println(vähendatudRahaSumma);
+            System.out.println(Arrays.toString(available));
+            return leiaParimJääkRekursiooniga(vähendatudRahaSumma+eemaldatud,available,kasutatud2, reference, GCD(olemas), rahasumma);
+
+        }
+
+
+
+    }
+
+    private double leiaParimJääkRekursiooniga(double rahasumma, int[] available, int[] kasutatud2, int[] reference, int gcd, double parimjääk){
+        if (parimjääk <gcd){
+            return parimjääk;
+        }
         int[] kasutatud = new int[kasutatud2.length];
         for (int i = 0; i < kasutatud2.length; i++) {
             kasutatud[i] = kasutatud2[i];
         }
-        for (int i = 0; i < ülejäänud.length; i++) {
-            if (rahasumma >= ülejäänud[i]) {
+
+        for (int i = 0; i < reference.length; i++) {
+            if (rahasumma >= reference[i]) {
                 if (available[i]>0){
                     available[i] -= 1;
                     kasutatud[i] += 1;
-                    rahasumma -= ülejäänud[i];
-                    if (rahasumma == parimjääk) {
-                        parimkasutatud = kasutatud;
-                        System.out.print(rahasumma + " -- ");
-                        System.out.println(Arrays.toString(kasutatud));
-                        isfinished = true;
-                    }
-                    leiaVahetusMin(rahasumma, available, kasutatud, parimjääk);
+                    rahasumma -= reference[i];
+                    parimjääk = leiaParimJääkRekursiooniga(rahasumma, available, kasutatud, reference, gcd, parimjääk);
                     available[i] += 1;
                     kasutatud[i] -= 1;
                     rahasumma += reference[i];
                 }
+            }else {
+                if (rahasumma<parimjääk){
+                    parimjääk = rahasumma;
+                }
             }
         }
+        return parimjääk;
     }
     private double valuutaVahetus(double rahasumma, String algvaluuta, String soovvaluuta){
         String eurprefix = mainClass.prefs.EURPREFIX;
@@ -352,13 +391,86 @@ public class MainMenu implements Screen {
     }
     private void kuvaTagastatavText(){
         String[] kupyyrid = mainClass.prefs.getKupüürid().split(",");
+        Arrays.sort(kupyyrid, new Comparator<String>()
+        {
+            public int compare(String s1, String s2)
+            {
+                return Integer.valueOf(s1).compareTo(Integer.valueOf(s2));
+            }
+        });
         String s = "";
         int summa = 0;
+        int[] sortedReference = sortedList(reference);
         for (int i = 0; i < kupyyrid.length; i++) {
             s += kupyyrid[i] + " x " + parimkasutatud[i] + "\n";
-            summa+=parimkasutatud[i]*reference[i];
+
+            summa+=parimkasutatud[i]*sortedReference[i];
         }
-        s+="summa = "+summa;
+        s+="summa = "+summa+"\n";
+        s+="jääk = "+parimjääk;
         kasutatudlabel.setText(s);
+    }
+    private int LCMRecursion(int[] ints, int biggest){
+        if (ints.length==1){
+            return biggest;
+        }
+
+        while (biggest%ints[ints.length-2]!=0){
+            biggest+=ints[ints.length-1];
+        }
+        int[] newInts = new int[ints.length-1];
+        for (int i = 0; i < newInts.length-1; i++) {
+            newInts[i] = ints[i];
+        }
+        newInts[newInts.length-1] = biggest;
+        return LCMRecursion(newInts, biggest);
+    }
+    private int LCM(int[] ints){
+        int[] clone = ints.clone();
+        Arrays.sort(clone);
+        return LCMRecursion(clone, clone[clone.length-1]);
+    }
+    private int[] matchReferenceWithAvaivable(int[] sortedReference, int[] reference, int[] avaivable){
+        int[] answer = new int[avaivable.length];
+        for (int i = 0; i < reference.length; i++) {
+            for (int j = 0; j < reference.length; j++) {
+                if (sortedReference[j] == reference[i]){
+                    answer[j] = avaivable[i];
+                }
+            }
+        }
+        return answer;
+    }
+    private int[] sortedList(int[] ints){
+        int[] a = ints.clone();
+        Arrays.sort(a);
+        return a;
+    }
+
+    private int GCD(int[] ints){
+        int[] clone = ints.clone();
+        Arrays.sort(clone);
+        return GCDRecursion(clone);
+    }
+    private int GCDRecursion(int[] ints){
+        if (ints.length==1){
+            return ints[0];
+        }
+        int n1 = ints[ints.length-1];
+        int n2 = ints[ints.length-2];
+
+        while(n1 != n2)
+        {
+            if(n1 > n2)
+                n1 -= n2;
+            else
+                n2 -= n1;
+        }
+        int[] newInts = new int[ints.length-1];
+        for (int i = 0; i < newInts.length-1; i++) {
+            newInts[i] = ints[i];
+        }
+        newInts[newInts.length-1] = n1;
+        return GCD(newInts);
     }
 }
