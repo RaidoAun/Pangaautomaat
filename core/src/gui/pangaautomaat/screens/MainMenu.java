@@ -6,17 +6,12 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.utils.Align;
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 import gui.pangaautomaat.FloatTextFieldFilter;
 import gui.pangaautomaat.MainClass;
-import gui.pangaautomaat.NumberTextFieldFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainMenu implements Screen {
     private MainClass mainClass;
@@ -27,7 +22,7 @@ public class MainMenu implements Screen {
     private int[] reference;
     private boolean isfinished;
     private double parimjääk;
-    public MainMenu(MainClass mainclass){
+    public MainMenu(final MainClass mainclass){
         this.mainClass = mainclass;
         reference = mainClass.prefs.getKupüüridInts();
         parimkasutatud = new int[reference.length];
@@ -42,6 +37,8 @@ public class MainMenu implements Screen {
         final SelectBox<String> fromrahaühikbox = new SelectBox<>(mainClass.skin);
         final SelectBox<String> vahetustüüpbox = new SelectBox<>(mainClass.skin);
         final SelectBox<String> torahaühikbox = new SelectBox<>(mainClass.skin);
+        final Label andmeteKuupäevText = new Label("andmete kuupäev: "+mainclass.dataDownloader.dataTime, labelStyle);
+        kasutatudlabel = new Label("", labelStyle);
         fromrahaarvtextfield.setTextFieldFilter(new FloatTextFieldFilter());
         torahaarvtextfield.setTextFieldFilter(new FloatTextFieldFilter());
         torahaarvtextfield.setDisabled(true);
@@ -114,10 +111,7 @@ public class MainMenu implements Screen {
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 mainClass.dataDownloader.download();
                 mainClass.updateDataToPrefs();
-
-                //TODO GUI võiks näidata ka praeguseid kursi andmeid, siin saaks uuendada seda
-                //mainClass.dataDownloader.dataTime;
-                //mainClass.prefs.getEUR_USA();
+                andmeteKuupäevText.setText("andmete kuupäev: "+mainclass.dataDownloader.dataTime);
                 return true;
             }
         });
@@ -130,7 +124,7 @@ public class MainMenu implements Screen {
                 return true;
             }
         });
-        kasutatudlabel = new Label("", labelStyle);
+
         String[] kupyyrid = mainClass.prefs.getKupüürid().split(",");
         Arrays.sort(kupyyrid, new Comparator<String>()
         {
@@ -142,6 +136,8 @@ public class MainMenu implements Screen {
         kuvaTagastatavText();
 
         Table firstTable = new Table();
+
+        firstTable.row();
         firstTable.add(fromrahaühikbox);
         firstTable.add(fromrahaarvtextfield);
         firstTable.add(vahetustüüpbox);
@@ -158,8 +154,11 @@ public class MainMenu implements Screen {
         secondaryTable.row();
         secondaryTable.add(kasutatudlabel);
         Table mainTable = new Table();
+
         mainTable.setHeight(600);
         mainTable.setFillParent(true);
+        mainTable.add(andmeteKuupäevText);
+        mainTable.row();
         mainTable.add(firstTable).top();
         mainTable.row();
         mainTable.add(secondaryTable).minHeight(300).bottom();
@@ -212,24 +211,23 @@ public class MainMenu implements Screen {
     public void vahetus(String tagastatav, double rahasumma, String algvaluuta, String soovvaluuta) {
         double paljuraha = valuutaVahetus(rahasumma,algvaluuta,soovvaluuta);
         isfinished = false;
-        //TODO check, et pangaautomaadis yldse piisavalt raha vahetuseks
         int[] available = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(soovvaluuta));
         int[] kasutatud = new int[available.length];
-        // available[] index tähistab: [1000, 500, 200, 50, 20]
         parimkasutatud = new int[reference.length];
-        //double parimjääk = leiaParimJääk(paljuraha, available);
         int[] tempreference = sortedList(reference);
-        int[] avaivabletemp = matchReferenceWithAvaivable(tempreference, reference, available);
+        int[] availabletemp = matchReferenceWithAvaivable(tempreference, reference, available);
         double parimjääk = leiaParimJääk2(paljuraha,available, kasutatud, reference);
         this.parimjääk = parimjääk;
-        System.out.println(parimjääk);
         if(tagastatav.equals("max")) {
-            leiaVahetusMax(paljuraha,avaivabletemp,kasutatud, parimjääk, tempreference);
+            leiaVahetusMax(paljuraha,availabletemp,kasutatud, parimjääk, tempreference);
         }
         if (tagastatav.equals("min")){
-            leiaVahetusMin(paljuraha, avaivabletemp, kasutatud, parimjääk, tempreference);
+            leiaVahetusMin(paljuraha, availabletemp, kasutatud, parimjääk, tempreference);
         }
-        System.out.println("-------");
+        kuvaTagastatavText();
+        int[] newSortedAvailable = makeAvailableFromKasutatud(parimkasutatud, availabletemp);
+        available = matchReferenceWithAvaivable(reference, tempreference, newSortedAvailable);
+        mainClass.prefs.preferences.putString(soovvaluuta,mainClass.prefs.intsToString(available));
     }
 
     public void leiaVahetusMin(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference) {
@@ -248,8 +246,8 @@ public class MainMenu implements Screen {
                     kasutatud[i] += 1;
                     rahasumma -= reference[i];
                     if (rahasumma == parimjääk) {
-                        parimkasutatud = kasutatud;
-                        kuvaTagastatavText();
+                        parimkasutatud = kasutatud.clone();
+
                         isfinished = true;
                     }
                     leiaVahetusMin(rahasumma, available, kasutatud, parimjääk, reference);
@@ -260,13 +258,12 @@ public class MainMenu implements Screen {
             }else {
                 if (rahasumma == parimjääk) {
                     parimkasutatud = kasutatud;
-                    kuvaTagastatavText();
                     isfinished = true;
                 }
             }
         }
     }
-    private void leiaVahetusMax(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference){
+    private void leiaVahetusMaxVana(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference){
         if (isfinished) {
             return;
         }
@@ -282,17 +279,13 @@ public class MainMenu implements Screen {
                     }
                     available[i] -= 1;
                     kasutatud[i] += 1;
-                    System.out.println(Arrays.toString(kasutatud));
-                    System.out.println(rahasumma);
-                    System.out.println("-----");
                     rahasumma -= reference[i];
                     if (rahasumma == parimjääk) {
                         parimkasutatud = kasutatud;
                         kuvaTagastatavText();
                         isfinished = true;
                     }
-
-                    leiaVahetusMax(rahasumma, available, kasutatud, parimjääk, reference);
+                    leiaVahetusMaxVana(rahasumma, available, kasutatud, parimjääk, reference);
                     available[i] += 1;
                     kasutatud[i] -= 1;
                     rahasumma += reference[i];
@@ -305,6 +298,37 @@ public class MainMenu implements Screen {
                 }
             }
         }
+    }
+    private void leiaVahetusMax(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference){
+        leiaVahetusMin(rahasumma, available, kasutatud2,parimjääk, reference);
+        available = makeAvailableFromKasutatud(parimkasutatud, available);
+        boolean vahetusToimunud = true;
+        while (vahetusToimunud){
+            vahetusToimunud = false;
+            for (int i = 1; i < parimkasutatud.length; i++) {
+                if (parimkasutatud[i]>0){
+                    int lcm = LCM(new int[]{reference[i-1],reference[i]});
+                    int vahetamiseksVajaPraegust = lcm/reference[i];
+                    if (parimkasutatud[i]>=vahetamiseksVajaPraegust){
+                        int vahetamiseksVajaVäiksemat = lcm/reference[i-1];
+                        if (available[i-1]>=vahetamiseksVajaVäiksemat){
+                            vahetusToimunud = true;
+                            available[i-1]-=vahetamiseksVajaVäiksemat;
+                            parimkasutatud[i-1] += vahetamiseksVajaVäiksemat;
+                            available[i]+=vahetamiseksVajaPraegust;
+                            parimkasutatud[i]-=vahetamiseksVajaPraegust;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private int[] makeAvailableFromKasutatud(int[] kasutatud, int[] available){
+        int[] answer = available.clone();
+        for (int i = 0; i < answer.length; i++) {
+            answer[i] -= kasutatud[i];
+        }
+        return answer;
     }
     private int leiaAutomaadisOlevRaha(int[] avaivable, int[] reference){
         int summa = 0;
@@ -335,16 +359,12 @@ public class MainMenu implements Screen {
         }else {
             double vähendatudRahaSumma = rahasumma%LCM(olemas);
             double eemaldatud = rahasumma-vähendatudRahaSumma;
-            //TODO jääk on raudselt 0, võib kasutada leiaVahetusMin();
             for (int i = reference.length-1; i > 0; i--) {
-                while (available[i]>0 && eemaldatud>=0){
-                    System.out.println(eemaldatud);
+                while (available[i]>0 && eemaldatud>0){
                     eemaldatud-=reference[i];
                     available[i]--;
                 }
             }
-            System.out.println(vähendatudRahaSumma);
-            System.out.println(Arrays.toString(available));
             return leiaParimJääkRekursiooniga(vähendatudRahaSumma+eemaldatud,available,kasutatud2, reference, GCD(olemas), rahasumma);
 
         }
@@ -407,7 +427,8 @@ public class MainMenu implements Screen {
             summa+=parimkasutatud[i]*sortedReference[i];
         }
         s+="summa = "+summa+"\n";
-        s+="jääk = "+parimjääk;
+        double roundedPariumJääk = Math.round(parimjääk*20.0)/20.0;
+        s+="jääk = "+roundedPariumJääk;
         kasutatudlabel.setText(s);
     }
     private int LCMRecursion(int[] ints, int biggest){

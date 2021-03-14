@@ -34,7 +34,7 @@ public class AssetsLoader {
         this.manager.setLoader(BitmapFont.class, ".ttf", new FreetypeFontLoader(resolver));
         this.mySmallFont = new FreetypeFontLoader.FreeTypeFontLoaderParameter();
         this.mySmallFont.fontFileName = robotoBlack;
-        this.mySmallFont.fontParameters.size = 30;
+        this.mySmallFont.fontParameters.size = 28;
     }
 
 

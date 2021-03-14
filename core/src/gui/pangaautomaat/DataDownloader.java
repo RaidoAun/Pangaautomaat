@@ -38,6 +38,9 @@ public class DataDownloader {
         }
     }
     public String[] getData(){
+        if (!Files.exists(Paths.get(absoluteDataPath))){
+            download();
+        }
         try{
             DocumentBuilderFactory dBfactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = dBfactory.newDocumentBuilder();
