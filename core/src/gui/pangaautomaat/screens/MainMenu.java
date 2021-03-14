@@ -409,7 +409,7 @@ public class MainMenu implements Screen {
         double soovkurss = mainClass.prefs.preferences.getFloat(eurprefix + soovvaluuta);
         double realkurss = soovkurss/algkurss;
         double paljuraha = (rahasumma * realkurss);
-        return Math.round(paljuraha*20)/20.0;
+        return paljuraha;
     }
     private void kuvaTagastatavText(){
         String[] kupyyrid = mainClass.prefs.getKupüürid().split(",");

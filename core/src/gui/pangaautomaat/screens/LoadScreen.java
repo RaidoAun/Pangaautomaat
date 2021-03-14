@@ -61,14 +61,19 @@ public class LoadScreen implements Screen {
                     int[] kupüürid = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(valuutad[i]));
                     String[] strings = new String[referencekupüürid.length];
                     for (int j = 0; j < kupüürid.length; j++) {
+                        if (textFields[i][j].getText().length()==0){
+                            textFields[i][j].setText("0");
+                        }
                         strings[j] = textFields[i][j].getText();
                     }
                     mainClass.prefs.preferences.putString(valuutad[i],mainClass.prefs.stringsToString(strings));
                 }
-
                 String[] strings = new String[referencekupüürid.length];
                 for (int i = 0; i < referencekupüürid.length; i++) {
-                     strings[i] = referencekupüüridtextfields[i].getText();
+                    if (referencekupüüridtextfields[i].getText().length()==0){
+                        referencekupüüridtextfields[i].setText("0");
+                    }
+                    strings[i] = referencekupüüridtextfields[i].getText();
                 }
                 mainClass.prefs.setKupüürid(mainClass.prefs.stringsToString(strings));
                 mainClass.prefs.save();
