@@ -6,22 +6,28 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import gui.pangaautomaat.FloatTextFieldFilter;
-import gui.pangaautomaat.MainClass;
+import gui.pangaautomaat.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class MainMenu implements Screen {
+public class MainMenu implements Screen, TaskListener {
     private MainClass mainClass;
     private Stage stage;
     private Label kasutatudlabel;
     private int[] parimkasutatud;
-    private double parimrahasumma;
     private int[] reference;
     private boolean isfinished;
     private double parimjääk;
+    private boolean kuvatudLiigaKauaAegaTekst;
+    private SelectBox<String> vahetustüüpbox;
+    private TextField fromrahaarvtextfield;
+    private TextField torahaarvtextfield;
+    private SelectBox<String> fromrahaühikbox;
+    private double vahetatavRaha;
+    private SelectBox<String> torahaühikbox;
+    private JäägiLeidjaRunnable jäägileidja;
     public MainMenu(final MainClass mainclass){
         this.mainClass = mainclass;
         reference = mainClass.prefs.getKupüüridInts();
@@ -32,11 +38,12 @@ public class MainMenu implements Screen {
         Label.LabelStyle labelStyle = mainClass.skin.get(Label.LabelStyle.class);
         labelStyle.font = mainClass.assetsLoader.manager.get(mainClass.assetsLoader.robotoBlack);
 
-        final TextField fromrahaarvtextfield = new TextField("0", mainClass.skin);
-        final TextField torahaarvtextfield = new TextField("0", mainClass.skin);
-        final SelectBox<String> fromrahaühikbox = new SelectBox<>(mainClass.skin);
-        final SelectBox<String> vahetustüüpbox = new SelectBox<>(mainClass.skin);
-        final SelectBox<String> torahaühikbox = new SelectBox<>(mainClass.skin);
+        fromrahaarvtextfield = new TextField("0", mainClass.skin);
+        torahaarvtextfield = new TextField("0", mainClass.skin);
+        fromrahaühikbox = new SelectBox<>(mainClass.skin);
+        torahaühikbox = new SelectBox<>(mainClass.skin);
+        vahetustüüpbox = new SelectBox<>(mainClass.skin);
+
         final Label andmeteKuupäevText = new Label("andmete kuupäev: "+mainclass.dataDownloader.dataTime, labelStyle);
         kasutatudlabel = new Label("", labelStyle);
         fromrahaarvtextfield.setTextFieldFilter(new FloatTextFieldFilter());
@@ -45,22 +52,14 @@ public class MainMenu implements Screen {
         fromrahaarvtextfield.setTextFieldListener(new TextField.TextFieldListener() {
             @Override
             public void keyTyped(TextField textField, char c) {
-                if (fromrahaarvtextfield.getText().length()!=0){
-                    torahaarvtextfield.setText(String.valueOf(valuutaVahetus(Double.parseDouble(fromrahaarvtextfield.getText()),fromrahaühikbox.getSelected(), torahaühikbox.getSelected())));
-                }else {
-                    torahaarvtextfield.setText("0");
-                }
+                muudaToTextFieldi();
             }
         });
         fromrahaühikbox.addListener(new EventListener() {
             @Override
             public boolean handle(Event event) {
                 if (event instanceof ChangeListener.ChangeEvent){
-                    if (fromrahaarvtextfield.getText().length()!=0){
-                        torahaarvtextfield.setText(String.valueOf(valuutaVahetus(Double.parseDouble(fromrahaarvtextfield.getText()),fromrahaühikbox.getSelected(), torahaühikbox.getSelected())));
-                    }else {
-                        torahaarvtextfield.setText("0");
-                    }
+                    muudaToTextFieldi();
                 }
                 return true;
             }
@@ -69,11 +68,7 @@ public class MainMenu implements Screen {
             @Override
             public boolean handle(Event event) {
                 if (event instanceof ChangeListener.ChangeEvent){
-                    if (fromrahaarvtextfield.getText().length()!=0){
-                        torahaarvtextfield.setText(String.valueOf(valuutaVahetus(Double.parseDouble(fromrahaarvtextfield.getText()),fromrahaühikbox.getSelected(), torahaühikbox.getSelected())));
-                    }else {
-                        torahaarvtextfield.setText("0");
-                    }
+                    muudaToTextFieldi();
                 }
                 return true;
             }
@@ -97,11 +92,7 @@ public class MainMenu implements Screen {
         applybutton.addListener(new InputListener(){
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                //START
-                vahetus(vahetustüüpbox.getSelected(), Double.parseDouble(fromrahaarvtextfield.getText()), fromrahaühikbox.getSelected(), torahaühikbox.getSelected());
-
-
-                //FINISH
+                vahetus();
                 return true;
             }
         });
@@ -120,7 +111,6 @@ public class MainMenu implements Screen {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
                 mainClass.setScreen(new LoadScreen(mainClass));
-                //dispose();
                 return true;
             }
         });
@@ -208,28 +198,14 @@ public class MainMenu implements Screen {
         stage.dispose();
     }
 
-    public void vahetus(String tagastatav, double rahasumma, String algvaluuta, String soovvaluuta) {
-        double paljuraha = valuutaVahetus(rahasumma,algvaluuta,soovvaluuta);
-        isfinished = false;
+    public void vahetus(){
+        double rahasumma = Double.parseDouble(fromrahaarvtextfield.getText());
+        String algvaluuta = fromrahaühikbox.getSelected();
+        String soovvaluuta = torahaühikbox.getSelected();
+        vahetatavRaha = valuutaVahetus(rahasumma,algvaluuta,soovvaluuta);
         int[] available = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(soovvaluuta));
         int[] kasutatud = new int[available.length];
-        parimkasutatud = new int[reference.length];
-        int[] tempreference = sortedList(reference);
-        int[] availabletemp = matchReferenceWithAvaivable(tempreference, reference, available);
-        double parimjääk = leiaParimJääk2(paljuraha,available, kasutatud, reference);
-        System.out.println(parimjääk);
-        this.parimjääk = parimjääk;
-        if(tagastatav.equals("max")) {
-            leiaVahetusMax(paljuraha,availabletemp,kasutatud, parimjääk, tempreference);
-        }
-        if (tagastatav.equals("min")){
-            System.out.println(parimjääk);
-            leiaVahetusMin(paljuraha, availabletemp, kasutatud, parimjääk, tempreference);
-        }
-        kuvaTagastatavText();
-        int[] newSortedAvailable = makeAvailableFromKasutatud(parimkasutatud, availabletemp);
-        available = matchReferenceWithAvaivable(reference, tempreference, newSortedAvailable);
-        mainClass.prefs.preferences.putString(soovvaluuta,mainClass.prefs.intsToString(available));
+        leiaParimJääk2(vahetatavRaha,available, kasutatud, reference);
     }
 
     public void leiaVahetusMin(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference) {
@@ -260,42 +236,6 @@ public class MainMenu implements Screen {
             }else {
                 if (rahasumma == parimjääk) {
                     parimkasutatud = kasutatud;
-                    isfinished = true;
-                }
-            }
-        }
-    }
-    private void leiaVahetusMaxVana(double rahasumma, int[] available, int[] kasutatud2, double parimjääk, int[] reference){
-        if (isfinished) {
-            return;
-        }
-        int[] kasutatud = new int[kasutatud2.length];
-        for (int i = 0; i < kasutatud2.length; i++) {
-            kasutatud[i] = kasutatud2[i];
-        }
-        for (int i = 0; i < kasutatud.length; i++) {
-            if (rahasumma >= reference[i]) {
-                if (available[i]>0){
-                    if (isfinished){
-                        return;
-                    }
-                    available[i] -= 1;
-                    kasutatud[i] += 1;
-                    rahasumma -= reference[i];
-                    if (rahasumma == parimjääk) {
-                        parimkasutatud = kasutatud;
-                        kuvaTagastatavText();
-                        isfinished = true;
-                    }
-                    leiaVahetusMaxVana(rahasumma, available, kasutatud, parimjääk, reference);
-                    available[i] += 1;
-                    kasutatud[i] -= 1;
-                    rahasumma += reference[i];
-                }
-            }else {
-                if (rahasumma == parimjääk) {
-                    parimkasutatud = kasutatud;
-                    kuvaTagastatavText();
                     isfinished = true;
                 }
             }
@@ -342,7 +282,7 @@ public class MainMenu implements Screen {
         return summa;
     }
 
-    private double leiaParimJääk2(double rahasumma, int[] available, int[] kasutatud2, int[] reference){
+    private void leiaParimJääk2(double rahasumma, int[] available, int[] kasutatud2, int[] reference) {
         ArrayList<Integer> olemasKupüürid = new ArrayList<>();
         for (int i = 0; i < available.length; i++) {
             if (available[i]!=0){
@@ -357,8 +297,8 @@ public class MainMenu implements Screen {
         available = matchReferenceWithAvaivable(tempreference, reference, available);
         reference = tempreference;
         if (leiaAutomaadisOlevRaha(available, reference)<=rahasumma){
-            System.out.println("AUTOMAADIS POLE PIISAVALT RAHA");
-            return rahasumma-leiaAutomaadisOlevRaha(available, reference);
+            this.parimjääk = rahasumma-leiaAutomaadisOlevRaha(available, reference);
+            pealeJäägiThreadi();
 
         }else {
             double vähendatudRahaSumma = rahasumma%LCM(olemas);
@@ -369,43 +309,23 @@ public class MainMenu implements Screen {
                     available[i]--;
                 }
             }
-            System.out.println(vähendatudRahaSumma);
-            return leiaParimJääkRekursiooniga(vähendatudRahaSumma+eemaldatud,available,kasutatud2, reference, GCD(olemas), rahasumma);
-
-        }
-
-
-
-    }
-
-    private double leiaParimJääkRekursiooniga(double rahasumma, int[] available, int[] kasutatud2, int[] reference, int gcd, double parimjääk){
-        if (parimjääk < gcd || parimjääk == 0){
-            return parimjääk;
-        }
-        int[] kasutatud = new int[kasutatud2.length];
-        for (int i = 0; i < kasutatud2.length; i++) {
-            kasutatud[i] = kasutatud2[i];
-        }
-
-        for (int i = 0; i < reference.length; i++) {
-            if (rahasumma >= reference[i]) {
-                if (available[i]>0){
-                    available[i] -= 1;
-                    kasutatud[i] += 1;
-                    rahasumma -= reference[i];
-                    parimjääk = leiaParimJääkRekursiooniga(rahasumma, available, kasutatud, reference, gcd, parimjääk);
-                    available[i] += 1;
-                    kasutatud[i] -= 1;
-                    rahasumma += reference[i];
-                }
-            }else {
-                if (rahasumma<parimjääk){
-                    parimjääk = rahasumma;
+            jäägileidja = new JäägiLeidjaRunnable(vähendatudRahaSumma+eemaldatud,available,kasutatud2, reference, GCD(olemas), rahasumma);
+            jäägileidja.addListener(this);
+            mainClass.jäägiLeidjaThread = new Thread(jäägileidja);
+            long start = System.nanoTime();
+            long end;
+            mainClass.jäägiLeidjaThread.start();
+            kuvatudLiigaKauaAegaTekst = false;
+            while (!kuvatudLiigaKauaAegaTekst && mainClass.jäägiLeidjaThread.isAlive()){
+                end = System.nanoTime();
+                if (end-start>=1000000000){
+                    kuvatudLiigaKauaAegaTekst = true;
+                    mainClass.setScreen(new WaitingScreen(mainClass));
                 }
             }
         }
-        return parimjääk;
     }
+
     private double valuutaVahetus(double rahasumma, String algvaluuta, String soovvaluuta){
         String eurprefix = mainClass.prefs.EURPREFIX;
         double algkurss = mainClass.prefs.preferences.getFloat(eurprefix + algvaluuta);
@@ -498,5 +418,42 @@ public class MainMenu implements Screen {
         }
         newInts[newInts.length-1] = n1;
         return GCD(newInts);
+    }
+
+    @Override
+    public void threadComplete(Runnable runner) {
+        mainClass.setScreen(this);
+        if (!jäägileidja.interrupted){
+            this.parimjääk = jäägileidja.parimjääk;
+            pealeJäägiThreadi();
+        }
+    }
+    private void pealeJäägiThreadi(){
+        isfinished = false;
+        parimkasutatud = new int[reference.length];
+        int[] tempreference = sortedList(reference);
+        String soovvaluuta = torahaühikbox.getSelected();
+        int[] available = mainClass.prefs.stringToInts(mainClass.prefs.preferences.getString(soovvaluuta));
+        int[] availabletemp = matchReferenceWithAvaivable(tempreference, reference, available);
+        int[] kasutatud = new int[available.length];
+        String tagastatav = vahetustüüpbox.getSelected();
+        if(tagastatav.equals("max")) {
+            leiaVahetusMax(vahetatavRaha,availabletemp,kasutatud, parimjääk, tempreference);
+        }
+        if (tagastatav.equals("min")){
+            leiaVahetusMin(vahetatavRaha, availabletemp, kasutatud, parimjääk, tempreference);
+        }
+        kuvaTagastatavText();
+        int[] newSortedAvailable = makeAvailableFromKasutatud(parimkasutatud, availabletemp);
+        available = matchReferenceWithAvaivable(reference, tempreference, newSortedAvailable);
+        mainClass.prefs.preferences.putString(soovvaluuta,mainClass.prefs.intsToString(available));
+    }
+    private void muudaToTextFieldi(){
+        if (fromrahaarvtextfield.getText().length()!=0){
+            double rahasumma = valuutaVahetus(Double.parseDouble(fromrahaarvtextfield.getText()),fromrahaühikbox.getSelected(), torahaühikbox.getSelected());
+            torahaarvtextfield.setText(String.valueOf(Math.round(rahasumma*20.0)/20.0));
+        }else {
+            torahaarvtextfield.setText("0");
+        }
     }
 }

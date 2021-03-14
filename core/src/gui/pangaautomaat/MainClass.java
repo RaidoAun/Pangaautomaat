@@ -20,6 +20,7 @@ public class MainClass extends Game {
 	public Prefs prefs;
 	public DataDownloader dataDownloader;
 	public static final String[] valuutad = new String[]{"USD","GBP","CHF","SEK","RUB"};
+	public Thread jäägiLeidjaThread;
 	@Override
 	public void create () {
 		this.viewport = new FitViewport(this.ScreenWidth,this.ScreenHeight, new OrthographicCamera(this.ScreenWidth,this.ScreenHeight));
@@ -44,7 +45,6 @@ public class MainClass extends Game {
 
 		});
 		Gdx.input.setInputProcessor(this.inputMultiplexer);
-
 
         this.MAINMENU = new MainMenu(this);
 		this.setScreen(this.MAINMENU);

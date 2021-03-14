@@ -78,7 +78,6 @@ public class LoadScreen implements Screen {
                 mainClass.prefs.setKupüürid(mainClass.prefs.stringsToString(strings));
                 mainClass.prefs.save();
                 mainClass.setScreen(mainClass.MAINMENU);
-                dispose();
                 return true;
             }
         });
