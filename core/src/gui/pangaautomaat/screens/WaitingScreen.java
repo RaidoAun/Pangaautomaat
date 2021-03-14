@@ -24,7 +24,7 @@ public class WaitingScreen implements Screen {
         labelStyle.font = mainClass.assetsLoader.manager.get(mainClass.assetsLoader.robotoBlack);
 
 
-        final TextButton applybutton = new TextButton("Apply",mainClass.skin);
+        final TextButton applybutton = new TextButton("Peata",mainClass.skin);
         applybutton.addListener(new InputListener(){
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
