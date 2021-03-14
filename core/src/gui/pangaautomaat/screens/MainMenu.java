@@ -307,16 +307,18 @@ public class MainMenu implements Screen {
             vahetusToimunud = false;
             for (int i = 1; i < parimkasutatud.length; i++) {
                 if (parimkasutatud[i]>0){
-                    int lcm = LCM(new int[]{reference[i-1],reference[i]});
-                    int vahetamiseksVajaPraegust = lcm/reference[i];
-                    if (parimkasutatud[i]>=vahetamiseksVajaPraegust){
-                        int vahetamiseksVajaVäiksemat = lcm/reference[i-1];
-                        if (available[i-1]>=vahetamiseksVajaVäiksemat){
-                            vahetusToimunud = true;
-                            available[i-1]-=vahetamiseksVajaVäiksemat;
-                            parimkasutatud[i-1] += vahetamiseksVajaVäiksemat;
-                            available[i]+=vahetamiseksVajaPraegust;
-                            parimkasutatud[i]-=vahetamiseksVajaPraegust;
+                    for (int j = 1; j < i+1; j++) {
+                        int lcm = LCM(new int[]{reference[i-j],reference[i]});
+                        int vahetamiseksVajaPraegust = lcm/reference[i];
+                        if (parimkasutatud[i]>=vahetamiseksVajaPraegust){
+                            int vahetamiseksVajaVäiksemat = lcm/reference[i-j];
+                            if (available[i-j]>=vahetamiseksVajaVäiksemat){
+                                vahetusToimunud = true;
+                                available[i-j]-=vahetamiseksVajaVäiksemat;
+                                parimkasutatud[i-j] += vahetamiseksVajaVäiksemat;
+                                available[i]+=vahetamiseksVajaPraegust;
+                                parimkasutatud[i]-=vahetamiseksVajaPraegust;
+                            }
                         }
                     }
                 }
