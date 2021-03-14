@@ -217,11 +217,13 @@ public class MainMenu implements Screen {
         int[] tempreference = sortedList(reference);
         int[] availabletemp = matchReferenceWithAvaivable(tempreference, reference, available);
         double parimjääk = leiaParimJääk2(paljuraha,available, kasutatud, reference);
+        System.out.println(parimjääk);
         this.parimjääk = parimjääk;
         if(tagastatav.equals("max")) {
             leiaVahetusMax(paljuraha,availabletemp,kasutatud, parimjääk, tempreference);
         }
         if (tagastatav.equals("min")){
+            System.out.println(parimjääk);
             leiaVahetusMin(paljuraha, availabletemp, kasutatud, parimjääk, tempreference);
         }
         kuvaTagastatavText();
@@ -367,6 +369,7 @@ public class MainMenu implements Screen {
                     available[i]--;
                 }
             }
+            System.out.println(vähendatudRahaSumma);
             return leiaParimJääkRekursiooniga(vähendatudRahaSumma+eemaldatud,available,kasutatud2, reference, GCD(olemas), rahasumma);
 
         }
@@ -376,7 +379,7 @@ public class MainMenu implements Screen {
     }
 
     private double leiaParimJääkRekursiooniga(double rahasumma, int[] available, int[] kasutatud2, int[] reference, int gcd, double parimjääk){
-        if (parimjääk <gcd){
+        if (parimjääk < gcd || parimjääk == 0){
             return parimjääk;
         }
         int[] kasutatud = new int[kasutatud2.length];
